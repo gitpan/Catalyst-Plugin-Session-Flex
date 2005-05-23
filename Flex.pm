@@ -8,7 +8,7 @@ use Digest::MD5;
 use URI;
 use URI::Find;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 __PACKAGE__->mk_classdata('_session');
 __PACKAGE__->mk_accessors('sessionid');
@@ -64,6 +64,10 @@ sub finalize {
       $finder->find( \$c->res->{body} ) if $c->res->body;
     }
   }
+
+  untie(%{$c->{session}});
+  delete $c->{session};
+
   return $c->NEXT::finalize(@_);
 }
 
@@ -83,30 +87,82 @@ sub prepare_action {
     $c->sessionid($sid);
     $c->log->debug(qq/Found sessionid "$sid" in cookie/) if $c->debug;
   }
+
   $c->NEXT::prepare_action(@_);  
 }
 
+=head3 clear
+
+Clear the existing session from storage and create a new session.
+
+=cut
+
+sub session_clear {
+  my $c = shift;
+  
+  if($c->{session}) {
+    tied(%{$c->{session}})->delete;
+    untie($c->{session});
+    delete $c->{session};
+  }
+
+  my $session = {};
+
+  eval {
+    my $sid;
+    tie %{$session}, 'Apache::Session::Flex', undef, $c->config->{session};
+    $c->sessionid($sid = $session->{_session_id});
+    $c->log->debug(qq/Created session "$sid"/) if $c->debug;
+  };
+  if($@) {
+    die("Failed to create new session");
+  }
+
+  return $c->{session} = $session;
+}
+
+=head3 session
+
+Return the session as a hash reference.  If a session id was found via a URL or cookie from the client
+it will be used to retrieve the data previously stored.  If the previous session id was invalid or
+otherwise unretrievable, create a new session.
+
+=cut
+
+
 sub session {
   my $c = shift;
+
   return $c->{session} if $c->{session};
   my $sid = $c->sessionid;
 
+
+  my $session = {};
   if($sid) {
     # Load the session.
-    my %session;
-    tie %session, 'Apache::Session::Flex', $sid, $c->config->{session};
-    # Duplate the data from the store.
-    
-    $c->{session} = \%session;
-    return $c->session;
+    eval {
+      tie %{$session}, 'Apache::Session::Flex', $sid, $c->config->{session};
+    };
+    if($@) {
+      # Handle the error where the session couldn't be retrieved.
+      $c->sessionid(undef);
+      return $c->session();
+    }
+    return $c->{session} = $session;
   } 
   
-  my %session;
-  tie %session, 'Apache::Session::Flex', undef, $c->config->{session};
+  eval {
+    tie %{$session}, 'Apache::Session::Flex', undef, $c->config->{session};
+    $c->sessionid($sid = $session->{_session_id});
+    $c->log->debug(qq/Created session "$sid"/) if $c->debug;
+  };
+  if($@) {
+    die("Failed to create new session");
+  }
   # Load in the session id.
-  $c->sessionid($session{_session_id});
-  $c->log->debug(qq/Created session "$sid"/) if $c->debug;
-  return $c->{session} = \%session;      
+  $c->{session} = $session;
+
+  return $c->{session};
 }
 
 
@@ -130,7 +186,9 @@ sub setup {
 		 );
 
   while(my ($k, $v) = each %defaults) {
-    $self->config->{session}->{$k} ||= $v;
+    if(!exists($self->config->{session}->{$k})) {
+      $self->config->{session}->{$k} = $v;
+    }
   }
   
   return $self->NEXT::setup(@_);

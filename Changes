@@ -1,4 +1,8 @@
 Revision history for Perl extension Catalyst::Plugin::Session::Flex.
 
+0.02  05/23/2005
+	- add session_clear method
+	- cleanup the tie() code to use the %$ form of tying an existing hash reference.
+
 0.01  05/19/2005
         - first release
