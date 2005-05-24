@@ -8,7 +8,7 @@ use Digest::MD5;
 use URI;
 use URI::Find;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 __PACKAGE__->mk_classdata('_session');
 __PACKAGE__->mk_accessors('sessionid');

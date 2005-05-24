@@ -1,12 +1,11 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Catalyst-Plugin-Session-Flex
-version:      0.02
+version:      0.03
 version_from: Flex.pm
 installdirs:  site
 requires:
     Apache::Session::Flex:         0
-    Cache::FastMmap:               0
     Catalyst:                      2.99
     Class::Accessor::Fast:         0
     Class::Data::Inheritable:      0

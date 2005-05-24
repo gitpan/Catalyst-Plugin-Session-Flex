@@ -5,7 +5,6 @@ WriteMakefile(
     AUTHOR    => 'Rusty Conover (rconover@infogears.com)',
     PREREQ_PM => {
         Catalyst                 => '2.99',
-        Cache::FastMmap          => 0,
         Class::Accessor::Fast    => 0,
         Class::Data::Inheritable => 0,
         Digest::MD5              => 0,
