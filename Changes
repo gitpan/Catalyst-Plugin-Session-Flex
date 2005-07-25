@@ -1,5 +1,10 @@
 Revision history for Perl extension Catalyst::Plugin::Session::Flex.
 
+0.04  07/24/2005 
+	- Add support persistent session cookies, beyond the duration
+	of the browser by setting the expires config option.  Patched
+	by Andy Grundman <andy@hybridized.org>.
+
 0.03  05/23/2005
 	- Remove prerequisite for Cache::FastMmap from Makefile.PL
 

@@ -8,7 +8,7 @@ use Digest::MD5;
 use URI;
 use URI::Find;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 __PACKAGE__->mk_classdata('_session');
 __PACKAGE__->mk_accessors('sessionid');
@@ -26,6 +26,7 @@ MyApp->config->{session} = {
     Lock => 'Null',
     Generate => 'MD5',
     Serialize => 'Storable',
+    expires => '+1M',
 };
 
 =head1 DESCRIPTION
@@ -50,7 +51,10 @@ sub finalize {
     if ( my $cookie = $c->request->cookies->{session} ) {
       $set = 0 if $cookie->value eq $sid;
     }
-    $c->response->cookies->{session} = { value => $sid } if $set;
+    $c->response->cookies->{session} = { 
+        value => $sid,
+        expires => $c->config->{session}->{expires} || undef
+    } if $set;
     if ( $c->config->{session}->{rewrite} ) {
       my $finder = URI::Find->new(
 				  sub {
@@ -228,6 +232,12 @@ various L<Apache::Session> modules such as L<Apache::Session::File>.
 
 To enable automatic storing of sessions in the url set this to a true value.
 
+=head3 expires
+
+By default, the session cookie expires when the user closes their browser.
+To keep a persistent cookie, set an expires config option.  Valid values
+for this option are the same as in L<CGI>, i.e. +1d, +3M, and so on.
+
 =head1 SEE ALSO
 
 L<Catalyst> L<Apache::Session> L<Apache::Session::Flex>
@@ -235,6 +245,10 @@ L<Catalyst> L<Apache::Session> L<Apache::Session::Flex>
 =head1 AUTHOR
 
 Rusty Conover C<rconover@infogears.com>
+
+Patched by:
+
+Andy Grundman C<andy@hybridized.org>
 
 Based off of L<Catalyst::Plugin::Session::FastMmap> by:
 
