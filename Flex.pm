@@ -8,7 +8,7 @@ use Digest::MD5;
 use URI;
 use URI::Find;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 __PACKAGE__->mk_classdata('_session');
 __PACKAGE__->mk_accessors('sessionid');
@@ -41,20 +41,23 @@ Session management using Apache::Session via Apache::Session::Flex
 
 sub finalize {
   my $c = shift;
+
   if ( $c->config->{session}->{rewrite} ) {
     my $redirect = $c->response->redirect;
     $c->response->redirect( $c->uri($redirect) ) if $redirect;
   }
   
   if ( my $sid = $c->sessionid ) {
-    my $set = 1;
-    if ( my $cookie = $c->request->cookies->{session} ) {
-      $set = 0 if $cookie->value eq $sid;
-    }
+    # Always set the cookie for the session response, even if it already exists,
+    # this way we set a new expiration time.
     $c->response->cookies->{session} = { 
-        value => $sid,
-        expires => $c->config->{session}->{expires} || undef
-    } if $set;
+      value => $sid,
+
+      map {
+	((defined($c->config->{session}->{$_})) ? ($_ => $c->config->{session}->{$_}) : ())
+       } qw(expires domain path secure),
+    };
+
     if ( $c->config->{session}->{rewrite} ) {
       my $finder = URI::Find->new(
 				  sub {
@@ -238,9 +241,21 @@ By default, the session cookie expires when the user closes their browser.
 To keep a persistent cookie, set an expires config option.  Valid values
 for this option are the same as in L<CGI>, i.e. +1d, +3M, and so on.
 
+=head3 domain
+
+Set the domain of the session cookie
+
+=head3 path
+
+Set the path of the session cookie
+
+=head3 secure
+
+If true only set the session cookie if the request was retrieved via HTTPS.
+
 =head1 SEE ALSO
 
-L<Catalyst> L<Apache::Session> L<Apache::Session::Flex>
+L<Catalyst> L<Apache::Session> L<Apache::Session::Flex> L<CGI::Cookie>
 
 =head1 AUTHOR
 
