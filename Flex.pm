@@ -8,7 +8,7 @@ use Digest::MD5;
 use URI;
 use URI::Find;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 __PACKAGE__->mk_classdata('_session');
 __PACKAGE__->mk_accessors('sessionid');
@@ -98,7 +98,7 @@ sub prepare_action {
   $c->NEXT::prepare_action(@_);  
 }
 
-=head3 clear
+=head3 session_clear
 
 Clear the existing session from storage and create a new session.
 

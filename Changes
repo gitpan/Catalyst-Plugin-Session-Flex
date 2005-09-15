@@ -1,5 +1,9 @@
 Revision history for Perl extension Catalyst::Plugin::Session::Flex.
 
+0.06  09/15/2005
+	- Correct documentation bug for session_clear being listed as
+	clear reported by John Beppu <beppu@somebox.com>.
+
 0.05  08/27/2005
 	- Change finalize() to always set the cookie even if one
 	already exists, this way the expiration time is updated.
