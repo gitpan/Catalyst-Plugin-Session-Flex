@@ -8,7 +8,7 @@ use Digest::MD5;
 use URI;
 use URI::Find;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 __PACKAGE__->mk_classdata('_session');
 __PACKAGE__->mk_accessors('sessionid');
@@ -27,6 +27,7 @@ MyApp->config->{session} = {
     Generate => 'MD5',
     Serialize => 'Storable',
     expires => '+1M',
+    cookie_name => 'session',
 };
 
 =head1 DESCRIPTION
@@ -41,6 +42,7 @@ Session management using Apache::Session via Apache::Session::Flex
 
 sub finalize {
   my $c = shift;
+  my $cookie_name = $c->config->{session}{cookie_name} || 'session';
 
   if ( $c->config->{session}->{rewrite} ) {
     my $redirect = $c->response->redirect;
@@ -50,7 +52,7 @@ sub finalize {
   if ( my $sid = $c->sessionid ) {
     # Always set the cookie for the session response, even if it already exists,
     # this way we set a new expiration time.
-    $c->response->cookies->{session} = { 
+    $c->response->cookies->{$cookie_name} = { 
       value => $sid,
 
       map {
@@ -84,12 +86,13 @@ sub finalize {
 
 sub prepare_action {
   my $c = shift;
+  my $cookie_name = $c->config->{session}{cookie_name} || 'session';
   if ( $c->request->path =~ /^(.*)\/\-\/(.+)$/ ) {
     $c->request->path($1);
     $c->sessionid($2);
     $c->log->debug(qq/Found sessionid "$2" in path/) if $c->debug;
   }
-  if ( my $cookie = $c->request->cookies->{session} ) {
+  if ( my $cookie = $c->request->cookies->{$cookie_name} ) {
     my $sid = $cookie->value;
     $c->sessionid($sid);
     $c->log->debug(qq/Found sessionid "$sid" in cookie/) if $c->debug;
@@ -253,6 +256,10 @@ Set the path of the session cookie
 
 If true only set the session cookie if the request was retrieved via HTTPS.
 
+=head3 cookie_name
+
+Specify the name of the session cookie
+
 =head1 SEE ALSO
 
 L<Catalyst> L<Apache::Session> L<Apache::Session::Flex> L<CGI::Cookie>
@@ -264,6 +271,8 @@ Rusty Conover C<rconover@infogears.com>
 Patched by:
 
 Andy Grundman C<andy@hybridized.org>
+
+John Beppu C<beppu@somebox.com>
 
 Based off of L<Catalyst::Plugin::Session::FastMmap> by:
 

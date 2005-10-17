@@ -1,5 +1,9 @@
 Revision history for Perl extension Catalyst::Plugin::Session::Flex.
 
+0.07  10/17/2005
+        - Add cookie_name option to specify the name of the session cookie, 
+        patch contributed by John Beppu <beppu@somebox.com>.
+
 0.06  09/15/2005
 	- Correct documentation bug for session_clear being listed as
 	clear reported by John Beppu <beppu@somebox.com>.
